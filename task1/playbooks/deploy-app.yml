@@ -1,0 +1,33 @@
+---
+- name: Ensure Docker and Docker Compose are installed
+  hosts: all
+  become: true
+  tasks:
+
+    - name: Install Docker
+      ansible.builtin.package:
+        name: docker.io
+        state: present
+        
+    - name: Install Docker Compose
+      ansible.builtin.package:
+        name: docker-compose
+        state: present
+
+    - name: Ensure stack directory exists
+      ansible.builtin.file:
+        path: /opt/docker-stack
+        state: directory
+## ensure the directory exists before copying the file
+
+    - name: Copy file with owner and permissions
+      ansible.builtin.copy:
+        src: src/docker-compose.yml
+        dest: /opt/docker-stack/docker-compose.yml
+## here some users can be set for the file if necesary 
+
+    - name: Run docker compose up
+      ansible.builtin.command:
+        cmd: docker compose -f /opt/docker-stack/docker-compose.yml up -d
+      become_user: ansible
+## Run the docker compose up command as the ansible user
