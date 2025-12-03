@@ -1,0 +1,32 @@
+stages:
+  - build
+  - test
+
+variables:
+  DOCKER_DRIVER: overlay2
+
+# Build stage: compile Go app and build Docker image
+build:
+  stage: build
+  image: docker:latest
+  services:
+    - docker:dind
+  script:
+    - docker build -t sampleapp:latest .
+    - docker save sampleapp:latest > sampleapp.tar
+  artifacts:
+    paths:
+      - sampleapp.tar
+
+# Test stage: run unit tests inside Docker
+test:
+  stage: test
+  image: docker:latest
+  services:
+    - docker:dind
+  script:
+    # Load the image built in the previous stage
+    - docker load < sampleapp.tar
+    # Run the app with sample arguments to validate
+    - docker run --rm sampleapp:latest list --text="hello world" --metric=words
+    - docker run --rm sampleapp:latest count --text="hello world" --metric=chars
